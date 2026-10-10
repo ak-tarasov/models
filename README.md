@@ -6,6 +6,14 @@
 - `aps.py`: загрузка файла в Autodesk и запуск преобразования (`upload`, `status`, `list`).
 - `worker/worker.js`: посредник (Cloudflare Worker): страница `/m/<id>` и запросы данных `/p/<id>/...`.
 - `worker/dev.mjs`: локальный запуск посредника для проверки.
+- `cf.py`: размещение посредника в Cloudflare и ссылки на модели (`deploy`, `add`, `list`, `remove`).
+
+## Публикация
+
+1. Впишите в `.env` ключ Cloudflare (`CF_API_TOKEN`, шаблон Edit Cloudflare Workers).
+2. `python3 cf.py deploy`: в ответе адрес посредника.
+3. `python3 cf.py add <urn> "Название"`: в ответе ссылка на модель.
+4. `python3 cf.py remove <id>`: ссылка перестаёт работать.
 
 ## Локальный запуск
 
