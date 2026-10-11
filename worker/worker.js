@@ -42,7 +42,7 @@ function page(id, model) {
 <title>${esc(model.name || "Модель")} · NJ Design</title>
 <link rel="stylesheet" href="${VIEWER}/style.min.css">
 <script src="${VIEWER}/viewer3D.min.js"></script>
-<style>html,body,#v{margin:0;width:100%;height:100%;overflow:hidden}#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:16px sans-serif;color:#444}</style>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff}body{display:flex;align-items:center;justify-content:center}#v{position:relative;width:min(100vw,100vh);height:min(100vw,100vh);width:min(100vw,100dvh);height:min(100vw,100dvh);box-sizing:border-box;border:1px solid #c8ccd0;overflow:hidden}#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:16px sans-serif;color:#444}</style>
 </head>
 <body>
 <div id="v"></div><div id="msg">Загрузка модели…</div>
@@ -52,6 +52,23 @@ Autodesk.Viewing.Initializer({ env: 'AutodeskProduction', api: 'derivativeV2', s
   Autodesk.Viewing.endpoint.setEndpointAndApi(location.origin + '/p/${id}', 'derivativeV2');
   const viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('v'));
   viewer.start();
+  addEventListener('resize', () => viewer.resize());
+  // frame the solid geometry only: stray lines far from the model would shrink it
+  viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
+    if (!viewer.model.is3d()) return;
+    const frags = viewer.model.getFragmentList(), box = new THREE.Box3(), b = new THREE.Box3();
+    for (let i = 0; i < frags.getCount(); i++) {
+      const g = frags.getGeometry(i);
+      if (!g || g.isLines || g.isWideLines || g.isPoints) continue;
+      frags.getWorldBounds(i, b);
+      box.union(b);
+    }
+    if (box.empty()) return;
+    viewer.navigation.fitBounds(true, box);
+    const nav = viewer.navigation, t = nav.getTarget(), p = nav.getPosition();
+    nav.setView(p.sub(t).multiplyScalar(0.9).add(t), t);
+    window.__framed = true;
+  });
   Autodesk.Viewing.Document.load('urn:${model.urn}', doc => {
     viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry()).then(() => {
       document.getElementById('msg').remove();
