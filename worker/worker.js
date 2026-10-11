@@ -68,7 +68,10 @@ Autodesk.Viewing.Initializer({ env: 'AutodeskProduction', api: 'derivativeV2', s
     if (!xs.length) return;
     const span = a => { a.sort((p, q) => p - q); return [a[Math.floor(a.length * 0.02)], a[Math.ceil(a.length * 0.98) - 1]]; };
     const [x, y, z] = [span(xs), span(ys), span(zs)];
-    const box = new THREE.Box3(new THREE.Vector3(x[0], y[0], z[0]), new THREE.Vector3(x[1], y[1], z[1]));
+    const box = VIEW.box
+      ? new THREE.Box3(new THREE.Vector3().fromArray(VIEW.box, 0), new THREE.Vector3().fromArray(VIEW.box, 3))
+      : new THREE.Box3(new THREE.Vector3(x[0], y[0], z[0]), new THREE.Vector3(x[1], y[1], z[1]));
+    if (VIEW.hide) viewer.hide(VIEW.hide);
     const nav = viewer.navigation, c = box.getCenter(new THREE.Vector3());
     if (VIEW.dir) nav.setView(new THREE.Vector3().fromArray(VIEW.dir).add(c), c);
     nav.fitBounds(true, box);

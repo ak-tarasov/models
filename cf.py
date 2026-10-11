@@ -4,7 +4,7 @@
 Usage:
   cf.py deploy                 upload worker/worker.js, bind KV and the Autodesk key
   cf.py add <urn> <name>       create a link for a model, print it
-  cf.py view <id> <json>       opening view of a link: {"dir": [x, y, z], "zoom": 1.1}
+  cf.py view <id> <json>       opening view of a link: {"dir": [x, y, z], "zoom": 1.1, "box": [6 numbers], "hide": [dbIds]}
   cf.py list                   existing links
   cf.py remove <id>            revoke a link
 """
