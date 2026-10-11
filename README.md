@@ -13,7 +13,8 @@
 1. Впишите в `.env` ключ Cloudflare (`CF_API_TOKEN`, шаблон Edit Cloudflare Workers).
 2. `python3 cf.py deploy`: в ответе адрес посредника.
 3. `python3 cf.py add <urn> "Название"`: в ответе ссылка на модель.
-4. `python3 cf.py remove <id>`: ссылка перестаёт работать.
+4. `python3 cf.py view <id> '{"dir": [-1, 1, 1.3], "zoom": 1.1}'`: с какой стороны и насколько крупно открывать модель.
+5. `python3 cf.py remove <id>`: ссылка перестаёт работать.
 
 ## Локальный запуск
 

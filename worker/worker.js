@@ -48,25 +48,32 @@ function page(id, model) {
 <div id="v"></div><div id="msg">Загрузка модели…</div>
 <script>
 const msg = t => document.getElementById('msg').textContent = t;
+const VIEW = ${JSON.stringify(model.view || {}).replace(/</g, '\\u003c')};
 Autodesk.Viewing.Initializer({ env: 'AutodeskProduction', api: 'derivativeV2', shouldInitializeAuth: false, language: 'ru' }, () => {
   Autodesk.Viewing.endpoint.setEndpointAndApi(location.origin + '/p/${id}', 'derivativeV2');
   const viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('v'));
   viewer.start();
   addEventListener('resize', () => viewer.resize());
-  // frame the solid geometry only: stray lines far from the model would shrink it
+  // frame where the detail is: the middle 96% of solid fragment centres per axis,
+  // so slabs, long walls and stray lines around the model do not shrink it
   viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
     if (!viewer.model.is3d()) return;
-    const frags = viewer.model.getFragmentList(), box = new THREE.Box3(), b = new THREE.Box3();
+    const frags = viewer.model.getFragmentList(), b = new THREE.Box3(), xs = [], ys = [], zs = [];
     for (let i = 0; i < frags.getCount(); i++) {
       const g = frags.getGeometry(i);
       if (!g || g.isLines || g.isWideLines || g.isPoints) continue;
       frags.getWorldBounds(i, b);
-      box.union(b);
+      xs.push((b.min.x + b.max.x) / 2); ys.push((b.min.y + b.max.y) / 2); zs.push((b.min.z + b.max.z) / 2);
     }
-    if (box.empty()) return;
-    viewer.navigation.fitBounds(true, box);
-    const nav = viewer.navigation, t = nav.getTarget(), p = nav.getPosition();
-    nav.setView(p.sub(t).multiplyScalar(0.9).add(t), t);
+    if (!xs.length) return;
+    const span = a => { a.sort((p, q) => p - q); return [a[Math.floor(a.length * 0.02)], a[Math.ceil(a.length * 0.98) - 1]]; };
+    const [x, y, z] = [span(xs), span(ys), span(zs)];
+    const box = new THREE.Box3(new THREE.Vector3(x[0], y[0], z[0]), new THREE.Vector3(x[1], y[1], z[1]));
+    const nav = viewer.navigation, c = box.getCenter(new THREE.Vector3());
+    if (VIEW.dir) nav.setView(new THREE.Vector3().fromArray(VIEW.dir).add(c), c);
+    nav.fitBounds(true, box);
+    const t = nav.getTarget(), p = nav.getPosition();
+    nav.setView(p.sub(t).multiplyScalar(VIEW.zoom || 1).add(t), t);
     window.__framed = true;
   });
   Autodesk.Viewing.Document.load('urn:${model.urn}', doc => {

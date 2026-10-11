@@ -4,6 +4,7 @@
 Usage:
   cf.py deploy                 upload worker/worker.js, bind KV and the Autodesk key
   cf.py add <urn> <name>       create a link for a model, print it
+  cf.py view <id> <json>       opening view of a link: {"dir": [x, y, z], "zoom": 1.1}
   cf.py list                   existing links
   cf.py remove <id>            revoke a link
 """
@@ -85,6 +86,15 @@ def add(urn, name):
     print(f"{base_url(acc)}/m/{link_id}")
 
 
+def set_view(link_id, view):
+    acc = account()
+    path = f"/accounts/{acc}/storage/kv/namespaces/{kv_namespace(acc)}/values/{urllib.parse.quote(link_id)}"
+    model = json.loads(cf("GET", path, raw=True))
+    model["view"] = json.loads(view)
+    cf("PUT", path, json.dumps(model, ensure_ascii=False).encode(), {"Content-Type": "text/plain"})
+    print(f"{base_url(acc)}/m/{link_id}", model["view"])
+
+
 def list_links():
     acc = account()
     ns = kv_namespace(acc)
@@ -107,6 +117,8 @@ if __name__ == "__main__":
         deploy()
     elif len(a) == 3 and a[0] == "add":
         add(a[1], a[2])
+    elif len(a) == 3 and a[0] == "view":
+        set_view(a[1], a[2])
     elif a == ["list"]:
         list_links()
     elif len(a) == 2 and a[0] == "remove":
