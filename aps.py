@@ -3,6 +3,8 @@
 
 Usage:
   aps.py upload <file> [--name <object-name>]   upload + start translation, print urn
+  aps.py upload <zip> --root <file-in-zip>      host model zipped with its linked files
+  aps.py translate <urn> [--root <file-in-zip>] restart translation of an uploaded object
   aps.py status <urn>                           translation progress
   aps.py list                                   objects in the bucket
 """
@@ -83,7 +85,7 @@ def safe_name(name):
     return f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}{ext.lower()}"
 
 
-def upload(path, name=None):
+def upload(path, name=None, root=None):
     token = get_token()
     bucket = ensure_bucket(token)
     obj = name or safe_name(os.path.basename(path))
@@ -94,11 +96,17 @@ def upload(path, name=None):
          headers={"Content-Type": "application/octet-stream"})
     done = call("POST", base, token, {"uploadKey": signed["uploadKey"]})
     urn = urn_of(done["objectId"])
-    job = call("POST", f"{HOST}/modelderivative/v2/designdata/job", token,
-               {"input": {"urn": urn},
-                "output": {"formats": [{"type": "svf", "views": ["2d", "3d"]}]}})
+    job = translate(urn, root, token)
     print(json.dumps({"object": obj, "size": len(data), "urn": urn, "job": job.get("result")},
                      ensure_ascii=False))
+
+
+def translate(urn, root=None, token=None):
+    """Start (or restart) translation; root names the host model inside an uploaded zip."""
+    source = {"urn": urn, **({"compressedUrn": True, "rootFilename": root} if root else {})}
+    return call("POST", f"{HOST}/modelderivative/v2/designdata/job", token or get_token(),
+                {"input": source, "output": {"formats": [{"type": "svf", "views": ["2d", "3d"]}]}},
+                headers={"x-ads-force": "true"})
 
 
 def status(urn):
@@ -121,7 +129,10 @@ if __name__ == "__main__":
     load_env()
     a = sys.argv[1:]
     if len(a) >= 2 and a[0] == "upload":
-        upload(a[1], a[3] if len(a) > 3 and a[2] == "--name" else None)
+        opt = dict(zip(a[2::2], a[3::2]))
+        upload(a[1], opt.get("--name"), opt.get("--root"))
+    elif len(a) >= 2 and a[0] == "translate":
+        print(translate(a[1], dict(zip(a[2::2], a[3::2])).get("--root")).get("result"))
     elif len(a) == 2 and a[0] == "status":
         status(a[1])
     elif a == ["list"]:
