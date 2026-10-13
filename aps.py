@@ -97,8 +97,7 @@ def upload(path, name=None, root=None):
     done = call("POST", base, token, {"uploadKey": signed["uploadKey"]})
     urn = urn_of(done["objectId"])
     job = translate(urn, root, token)
-    print(json.dumps({"object": obj, "size": len(data), "urn": urn, "job": job.get("result")},
-                     ensure_ascii=False))
+    return {"object": obj, "size": len(data), "urn": urn, "job": job.get("result")}
 
 
 def translate(urn, root=None, token=None):
@@ -109,13 +108,13 @@ def translate(urn, root=None, token=None):
                 headers={"x-ads-force": "true"})
 
 
-def status(urn):
+def manifest(urn):
     m = call("GET", f"{HOST}/modelderivative/v2/designdata/{urn}/manifest", get_token())
     views = [c.get("name") for d in m.get("derivatives", []) for c in d.get("children", [])
              if c.get("type") == "geometry"]
     msgs = [x for d in m.get("derivatives", []) for x in d.get("messages", [])]
-    print(json.dumps({"status": m.get("status"), "progress": m.get("progress"),
-                      "views": views, "messages": msgs[:5]}, ensure_ascii=False))
+    return {"status": m.get("status"), "progress": m.get("progress"),
+            "views": views, "messages": msgs[:5]}
 
 
 def list_objects():
@@ -130,11 +129,11 @@ if __name__ == "__main__":
     a = sys.argv[1:]
     if len(a) >= 2 and a[0] == "upload":
         opt = dict(zip(a[2::2], a[3::2]))
-        upload(a[1], opt.get("--name"), opt.get("--root"))
+        print(json.dumps(upload(a[1], opt.get("--name"), opt.get("--root")), ensure_ascii=False))
     elif len(a) >= 2 and a[0] == "translate":
         print(translate(a[1], dict(zip(a[2::2], a[3::2])).get("--root")).get("result"))
     elif len(a) == 2 and a[0] == "status":
-        status(a[1])
+        print(json.dumps(manifest(a[1]), ensure_ascii=False))
     elif a == ["list"]:
         list_objects()
     else:

@@ -1,3 +1,4 @@
 .env
 models.local.json
 __pycache__/
+watch.state.json
