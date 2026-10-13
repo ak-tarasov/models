@@ -76,14 +76,14 @@ def deploy():
     print(base_url(acc))
 
 
-def add(urn, name):
+def add(urn, name, view=None):
     acc = account()
     ns = kv_namespace(acc)
     link_id = secrets.token_urlsafe(12)
+    model = {"urn": urn, "name": name, **({"view": view} if view else {})}
     cf("PUT", f"/accounts/{acc}/storage/kv/namespaces/{ns}/values/{link_id}",
-       json.dumps({"urn": urn, "name": name}, ensure_ascii=False).encode(),
-       {"Content-Type": "text/plain"})
-    print(f"{base_url(acc)}/m/{link_id}")
+       json.dumps(model, ensure_ascii=False).encode(), {"Content-Type": "text/plain"})
+    return f"{base_url(acc)}/m/{link_id}"
 
 
 def set_view(link_id, view):
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     if a == ["deploy"]:
         deploy()
     elif len(a) == 3 and a[0] == "add":
-        add(a[1], a[2])
+        print(add(a[1], a[2]))
     elif len(a) == 3 and a[0] == "view":
         set_view(a[1], a[2])
     elif a == ["list"]:
