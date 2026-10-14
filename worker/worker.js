@@ -51,7 +51,8 @@ function page(id, model) {
 if (new URLSearchParams(location.search).has('fill')) document.body.classList.add('fill');
 const msg = t => document.getElementById('msg').textContent = t;
 const VIEW = ${JSON.stringify(model.view || {}).replace(/</g, '\\u003c')};
-Autodesk.Viewing.Initializer({ env: 'AutodeskProduction', api: 'derivativeV2', shouldInitializeAuth: false, language: 'ru' }, () => {
+// no Autodesk usage analytics (Mixpanel ids in the visitor's browser): EU pages would need consent for them
+Autodesk.Viewing.Initializer({ env: 'AutodeskProduction', api: 'derivativeV2', shouldInitializeAuth: false, language: 'ru', optOutTrackingByDefault: true }, () => {
   Autodesk.Viewing.endpoint.setEndpointAndApi(location.origin + '/p/${id}', 'derivativeV2');
   const viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('v'));
   viewer.start();
