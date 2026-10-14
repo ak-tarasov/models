@@ -42,11 +42,13 @@ function page(id, model) {
 <title>${esc(model.name || "Модель")} · NJ Design</title>
 <link rel="stylesheet" href="${VIEWER}/style.min.css">
 <script src="${VIEWER}/viewer3D.min.js"></script>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff}body{display:flex;align-items:center;justify-content:center}#v{position:relative;width:min(100vw,100vh);height:min(100vw,100vh);width:min(100vw,100dvh);height:min(100vw,100dvh);box-sizing:border-box;border:1px solid #c8ccd0;overflow:hidden}#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:16px sans-serif;color:#444}</style>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff}body{display:flex;align-items:center;justify-content:center}#v{position:relative;width:min(100vw,100vh);height:min(100vw,100vh);width:min(100vw,100dvh);height:min(100vw,100dvh);box-sizing:border-box;border:1px solid #c8ccd0;overflow:hidden}body.fill #v{width:100vw;height:100vh;height:100dvh;border:0}#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:16px sans-serif;color:#444}</style>
 </head>
 <body>
 <div id="v"></div><div id="msg">Загрузка модели…</div>
 <script>
+// ?fill: the viewer takes the whole window instead of a square (the site's pop-up)
+if (new URLSearchParams(location.search).has('fill')) document.body.classList.add('fill');
 const msg = t => document.getElementById('msg').textContent = t;
 const VIEW = ${JSON.stringify(model.view || {}).replace(/</g, '\\u003c')};
 Autodesk.Viewing.Initializer({ env: 'AutodeskProduction', api: 'derivativeV2', shouldInitializeAuth: false, language: 'ru' }, () => {
